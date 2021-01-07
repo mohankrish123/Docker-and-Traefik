@@ -6,7 +6,7 @@ sh install_docker.sh
 
 #Docker-Hub login with credentials
 echo "$(tput setaf 1)$(tput setab 7) $(echo -e "\x1b[1m CONNECTING TO DOCKER REPOSITORY")$(tput sgr 0)"
-/usr/bin/docker login dockerhub.kensium.com --username=mohankrishnav --password='Krish123%'
+/usr/bin/docker login XXXXXXXXXXX --username=XXXXXXXXXX --password='XXXXXXXXXX'
 #Download the image & bring up the container
 echo "$(tput setaf 1)$(tput setab 7) $(echo -e "\x1b[1m DOWNLOADING THE MAGENTO 2.2.5 IMAGE FROM DOCKER HUB")$(tput sgr 0)"
 docker-compose up -d
