@@ -1,0 +1,82 @@
+# Mark Shust's Docker Configuration for Magento (https://github.com/markshust/docker-magento)
+# Version 29.0.0
+
+version: "3"
+
+services:
+  app:
+    image: dockerhub.kensium.com/devops.multicontainer.com/nginx:latest
+    container_name: 'nginx'
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=Host:devops.tupperware.com
+      - traefik.port=8000
+      - traefik.docker.network=web
+    links:
+      - db
+      - phpfpm
+    volumes: &appvolumes
+      - ~/.composer:/var/www/.composer:delegated
+      - ./appdata:/var/www/html
+      - sockdata:/sock
+#     - ssldata:/etc/nginx/certs
+    networks:
+      - web
+      - network-back
+
+
+  phpfpm:
+    image: dockerhub.kensium.com/devops.multicontainer.com/php:latest
+    container_name: 'php72'
+    links:
+      - db
+    volumes: *appvolumes
+    networks:
+      - web
+      - network-back
+
+  db:
+    image: dockerhub.kensium.com/devops.multicontainer.com/db
+    ports:
+      - "3306:3306"
+    env_file: env/db.env
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - network-back
+
+  redis:
+    image: redis:5.0
+    networks:
+      - network-back
+
+  elasticsearch:
+    image: markoshust/magento-elasticsearch:6.5.4-0
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - network-back
+
+  rabbitmq:
+    image: rabbitmq:3.7-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    networks:
+      - network-back
+
+volumes:
+  appdata:
+  dbdata:
+  rabbitmqdata:
+  sockdata:
+  ssldata:
+networks:
+   web:
+     external: true
+   network-back:
+     external: false
+

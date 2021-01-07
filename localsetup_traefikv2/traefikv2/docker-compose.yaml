@@ -1,0 +1,45 @@
+version: '3'
+
+services:
+
+    traefik:
+        container_name: traefik
+        image: traefik:v2.2
+        command:
+            - "--api.insecure=true"
+            - "--providers.docker=true"
+            - "--entryPoints.web.address=:80"
+            - "--entryPoints.websecure.address=:443"
+            - "--certificatesResolvers.le.acme.email=pavanj@kensium.com"
+            - "--certificatesResolvers.le.acme.storage=acme.json"
+            - "--certificatesResolvers.le.acme.tlsChallenge=true"
+            - "--certificatesResolvers.le.acme.httpChallenge=true"
+            - "--certificatesResolvers.le.acme.httpChallenge.entryPoint=web"
+            - "--api.dashboard=true"
+        restart: always
+        ports:
+            - 80:80
+            - 443:443
+            - 8080:8080
+        networks:
+            - web
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ./acme.json:/acme.json # touch acme.json; chmod 600 acme.json
+        labels:
+            # Redirect all HTTP to HTTPS permanently
+            - traefik.http.routers.http_catchall.rule=HostRegexp(`{any:.+}`)
+            - traefik.http.routers.http_catchall.entrypoints=web
+            - traefik.http.routers.http_catchall.middlewares=https_redirect
+            - traefik.http.middlewares.https_redirect.redirectscheme.scheme=https
+            - traefik.http.middlewares.https_redirect.redirectscheme.permanent=true
+            - traefik.http.routers.traefik.rule=Host(`traefik.kensium.tk`)
+            - traefik.http.routers.traefik.tls=true
+            - traefik.http.routers.traefik.tls.certresolver=le
+            - traefik.http.services.traefik.loadbalancer.server.port=8080
+            - traefik.http.routers.traefik.middlewares=auth
+            - traefik.http.middlewares.auth.basicauth.users=devops:$$apr1$$o79zlf2j$$IzgSflx3aDypi5et.U7Y0.
+
+networks:
+    web:
+        external: true

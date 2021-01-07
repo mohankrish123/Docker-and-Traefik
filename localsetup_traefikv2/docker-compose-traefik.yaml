@@ -1,0 +1,45 @@
+version: "3"
+services:
+    sw:
+        image: dockerhub.kensium.com/alpine3.12/optimized_final:es7.6.2
+        container_name: "sw.kensium.tk"
+        restart: always
+        networks:
+            - web
+        tty: true
+        labels:
+            - traefik.enable=true
+            - traefik.http.routers.sw-https.rule=Host(`sw.kensium.tk`)
+            - traefik.http.routers.sw-https.tls=true
+            - traefik.http.routers.sw-https.tls.certresolver=le
+            - traefik.http.routers.sw-https.service=sw-https-service
+            - traefik.http.services.sw-https-service.loadbalancer.server.port=80
+#            - traefik.http.middlewares.sw-https.basicauth.users=ami:$$apr1$$npmj9xbv$$yNwvEtUZIBbwn9gzcwNav0
+              #            - traefik.http.routers.sw-https.middlewares=ami-https
+
+            - traefik.http.routers.sw-rmq.rule=Host(`rmq-sw.kensium.tk`)
+            - traefik.http.routers.sw-rmq.tls=true
+            - traefik.http.routers.sw-rmq.tls.certresolver=le
+            - traefik.http.routers.sw-rmq.service=sw-rmq-service
+              #            - traefik.http.routers.sw-rmq.middlewares=ami-https
+            - traefik.http.services.sw-rmq-service.loadbalancer.server.port=15672
+
+            - traefik.http.routers.sw-es.rule=Host(`es-sw.kensium.tk`)
+            - traefik.http.routers.sw-es.tls=true
+            - traefik.http.routers.sw-es.tls.certresolver=le
+            - traefik.http.routers.sw-es.service=sw-es-service
+              #     - traefik.http.routers.sw-es.middlewares=ami-https
+            - traefik.http.services.sw-es-service.loadbalancer.server.port=9200
+        volumes:
+            - ~/composer_cache:/root/.composer/cache
+            - ./logs/nginx:/var/log/nginx:rw
+            - ./logs/php7:/var/log/php7:rw
+            - ./logs/varnish:/var/log/varnish:rw
+            - ./logs/redis:/var/log/redis:rw
+              #            - ./logs/elasticsearch:/var/log/elasticsearch
+            - ./html:/var/www/html
+            - ./database:/var/lib/mysql
+            - ./esdata:/usr/share/elasticsearch/data
+networks:
+    web:
+        external: true
